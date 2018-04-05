@@ -154,6 +154,11 @@ for ndset = 1:numel(seqs)
         train_extinput = zeros(nTrainTrials, nTimeBins, nExtInputs);
         test_extinput = zeros(nTestTrials, nTimeBins, nExtInputs);
     end
+    if isfield( seq, 'encoded_ics' )
+        nEncodedDimensions = size( seq(1).encoded_ics, 1 );
+        train_encoded_ics = zeros(nTrainTrials, nEncodedDimensions);
+        test_encoded_ics = zeros(nTestTrials, nEncodedDimensions);
+    end
     
     % compile the train data
     for it = 1:nTrainTrials
@@ -184,6 +189,9 @@ for ndset = 1:numel(seqs)
             tmp = reshape(ykeep',[],nTimeBins,size(ykeep,1));
             tmp2=squeeze(sum(tmp, 1))/binSizeMS;
             train_extinput(it,:,:) = tmp2;
+        end
+        if isfield(seq,'encoded_ics')
+            train_encoded_ics(it,:) = seq(nn).encoded_ics(:);
         end
     end
 
@@ -217,6 +225,9 @@ for ndset = 1:numel(seqs)
             tmp2=squeeze(sum(tmp, 1))/binSizeMS;
             test_extinput(it,:,:) = tmp2;
         end  
+        if isfield(seq,'encoded_ics')
+            test_encoded_ics(it,:) = seq(nn).encoded_ics(:);
+        end
     end
 
     varout = {};
@@ -236,6 +247,14 @@ for ndset = 1:numel(seqs)
         varout{end+1} = 'valid_ext_input';
         varout{end+1} = test_extinput;
         assert(~any(isnan(train_extinput(:))) && ~any(isnan(test_extinput(:))), 'NaNs found in external input data');
+    end
+       
+    if isfield(seq, 'encoded_ics')
+        varout{end+1} = 'train_encoded_ics'; %#ok<*AGROW>
+        varout{end+1} = train_encoded_ics;
+        varout{end+1} = 'valid_encoded_ics';
+        varout{end+1} = test_encoded_ics;
+        assert(~any(isnan(train_encoded_ics(:))) && ~any(isnan(test_encoded_ics(:))), 'NaNs found in external input data');
     end
 
     if numel(varout)

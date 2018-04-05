@@ -138,6 +138,8 @@ classdef Run < handle & matlab.mixin.CustomDisplay
         fileLFADSOutput % output from training and sampling can be tee'd here
 
         fileModelParams % Location on disk where model params will be written
+        
+        fileFitLog % location on disk where fit log will be written
 
         sessionNameTrain % name of tmux session that will be created if useSession = true is passed to writeShellScriptLFADSTrain
         sessionNamePosteriorMean % name of tmux session that will be created if useTmuxSession = true is passed to writeShellScriptLFADSPosteriorMean
@@ -418,6 +420,11 @@ classdef Run < handle & matlab.mixin.CustomDisplay
         function f = get.fileModelParams(r)
             f = fullfile(r.pathLFADSOutput, 'model_params');
         end
+        
+        function f = get.fileFitLog(r)
+            f = fullfile(r.pathLFADSOutput, 'fitlog.csv');
+        end
+
 
         function f = get.fileLFADSOutput(r)
             f = fullfile(r.path, 'lfads.out');
@@ -969,6 +976,7 @@ classdef Run < handle & matlab.mixin.CustomDisplay
             p.addParameter('useTmuxSession', false, @islogical);
             p.addParameter('keepSessionAlive', true, @islogical);
             p.addParameter('header', '#!/bin/bash', @ischar);
+            p.addParameter('path_run_lfads_py', '$(which run_lfads.py)', @ischar);
             p.addParameter('appendPosteriorMeanSample', false, @islogical);
             p.addParameter('appendWriteModelParams', false, @islogical);
             p.addParameter('teeOutput', false, @islogical);
@@ -981,6 +989,7 @@ classdef Run < handle & matlab.mixin.CustomDisplay
             f = r.fileShellScriptLFADSTrain;
             fid = fopen(f, 'w');
             trainString = r.buildLFADSTrainingCommand(...
+                'path_run_lfads_py', p.Results.path_run_lfads_py, ...
                 'cuda_visible_devices', p.Results.cuda_visible_devices, ...
                 'display', p.Results.display, ...
                 'useTmuxSession', false, ...
@@ -989,6 +998,7 @@ classdef Run < handle & matlab.mixin.CustomDisplay
             if p.Results.appendPosteriorMeanSample
                 % run only if train succeeds
                 pmString = r.buildCommandLFADSPosteriorMeanSample(...
+                    'path_run_lfads_py', p.Results.path_run_lfads_py, ...
                     'cuda_visible_devices', p.Results.cuda_visible_devices, ...
                     'useTmuxSession', false, ...
                     'teeOutput', false); % teeify later
@@ -996,6 +1006,7 @@ classdef Run < handle & matlab.mixin.CustomDisplay
                 if p.Results.appendWriteModelParams
                     % run only if train succeeds
                     writeParamsString = r.buildCommandLFADSWriteModelParams(...
+                        'path_run_lfads_py', p.Results.path_run_lfads_py, ...
                         'cuda_visible_devices', p.Results.cuda_visible_devices, ...
                         'useTmuxSession', false, ...
                         'teeOutput', false); % teeify later
@@ -1034,6 +1045,9 @@ classdef Run < handle & matlab.mixin.CustomDisplay
                     fprintf(fid, 'export PATH="%s:$PATH"\n', folder);
                 end
             end
+            
+            checkLFADSFoundString = LFADS.Run.generateCheckRunLFADSPyFoundString(p.Results.path_run_lfads_py);
+            fprintf(fid, '\n%s\n', checkLFADSFoundString);
 
             fprintf(fid, '%s\n', trainString);
             fclose(fid);
@@ -1047,6 +1061,7 @@ classdef Run < handle & matlab.mixin.CustomDisplay
 
         function outputString = buildLFADSTrainingCommand(r, varargin)
             p = inputParser();
+            p.addParameter('path_run_lfads_py', '$(which run_lfads.py)', @ischar);
             p.addOptional('cuda_visible_devices', [], @(x) isempty(x) || isscalar(x));
             p.addOptional('display', '', @(x) isempty(x) || (isnumeric(x) && mod(x,1)==0));
             p.addParameter('useTmuxSession', false, @islogical);
@@ -1054,8 +1069,9 @@ classdef Run < handle & matlab.mixin.CustomDisplay
             p.addParameter('teeOutput', false, @islogical);
             p.parse(varargin{:});
 
-            outputString = sprintf(['python $(which run_lfads.py) --data_dir=%s --data_filename_stem=lfads ' ...
+            outputString = sprintf(['python %s --data_dir=%s --data_filename_stem=lfads ' ...
                 '--lfads_save_dir=%s'], ...
+                p.Results.path_run_lfads_py, ...
                 LFADS.Utils.GetFullPath(r.pathLFADSInput), LFADS.Utils.GetFullPath(r.pathLFADSOutput));
 
             % use the method from +LFADS/RunParams.m
@@ -1093,6 +1109,7 @@ classdef Run < handle & matlab.mixin.CustomDisplay
 
             p = inputParser();
             p.addOptional('inputParams', @iscell)
+            p.addParameter('path_run_lfads_py', '$(which run_lfads.py)', @ischar);
             p.addParameter('loadHyperparametersFromFile', false, @islogical);
             p.addParameter('num_samples_posterior', r.params.num_samples_posterior, @isscalar); % can be used to manually overwrite
             p.addParameter('cuda_visible_devices', [], @(x) isempty(x) || isscalar(x));
@@ -1155,13 +1172,14 @@ classdef Run < handle & matlab.mixin.CustomDisplay
                 optstr = strcat(optstr, sprintf(' --kind=posterior_sample_and_average'));
 
                 % put the command together
-                cmd = sprintf('%s $(which run_lfads.py) %s', execstr, optstr);
+                cmd = sprintf('%s %s %s', execstr, p.Results.path_run_lfads_py, optstr);
             else
                 % use the RunParams to generate the params
                 paramsString = r.params.generateCommandLineOptionsString(r, 'omitFields', {'c_temporal_spike_jitter_width', 'c_batch_size'});
                 
-                cmd = sprintf(['python $(which run_lfads.py) --data_dir=%s --data_filename_stem=lfads ' ...
+                cmd = sprintf(['python %s --data_dir=%s --data_filename_stem=lfads ' ...
                 '--lfads_save_dir=%s --kind=posterior_sample_and_average --batch_size=%d --checkpoint_pb_load_name=checkpoint_lve %s'], ...
+                p.Results.path_run_lfads_py, ...
                 LFADS.Utils.GetFullPath(r.pathLFADSInput), LFADS.Utils.GetFullPath(r.pathLFADSOutput), p.Results.num_samples_posterior, paramsString);
             end
 
@@ -1184,6 +1202,7 @@ classdef Run < handle & matlab.mixin.CustomDisplay
 
         function cmd = buildCommandLFADSWriteModelParams(r, varargin)
             p = inputParser();
+            p.addParameter('path_run_lfads_py', '$(which run_lfads.py)', @ischar);
             p.addParameter('cuda_visible_devices', [], @(x) isempty(x) || isscalar(x));
             p.addParameter('useTmuxSession', false, @islogical);
             p.addParameter('keepSessionAlive', false, @islogical);
@@ -1201,9 +1220,10 @@ classdef Run < handle & matlab.mixin.CustomDisplay
             % use the RunParams to generate the params
             paramsString = r.params.generateCommandLineOptionsString(r, 'omitFields', {'c_temporal_spike_jitter_width'});
 
-            cmd = sprintf(['python $(which run_lfads.py) --data_dir=%s --data_filename_stem=lfads ' ...
+            cmd = sprintf(['python %s --data_dir=%s --data_filename_stem=lfads ' ...
             '--lfads_save_dir=%s --kind=write_model_params --checkpoint_pb_load_name=checkpoint_lve %s'], ...
-            LFADS.Utils.GetFullPath(r.pathLFADSInput), LFADS.Utils.GetFullPath(r.pathLFADSOutput), paramsString);
+                p.Results.path_run_lfads_py, ...
+                LFADS.Utils.GetFullPath(r.pathLFADSInput), LFADS.Utils.GetFullPath(r.pathLFADSOutput), paramsString);
 
             % set cuda visible devices
             if ~isempty(p.Results.cuda_visible_devices)
@@ -1244,6 +1264,7 @@ classdef Run < handle & matlab.mixin.CustomDisplay
             %   validation error checkpoint
 
             p = inputParser();
+            p.addParameter('path_run_lfads_py', '$(which run_lfads.py)', @ischar);
             p.addOptional('cuda_visible_devices', [], @isscalar);
             p.addParameter('header', '#!/bin/bash\n', @ischar);
             p.KeepUnmatched = true;
@@ -1252,9 +1273,15 @@ classdef Run < handle & matlab.mixin.CustomDisplay
             f = r.fileShellScriptLFADSPosteriorMeanSample;
             fid = fopen(f, 'w');
 
-            outputString = r.buildCommandLFADSPosteriorMeanSample('cuda_visible_devices', p.Results.cuda_visible_devices, p.Unmatched);
+            outputString = r.buildCommandLFADSPosteriorMeanSample(...
+                'path_run_lfads_py', p.Results.path_run_lfads_py, ...
+                'cuda_visible_devices', p.Results.cuda_visible_devices, p.Unmatched);
 
-            fprintf(fid, [p.Results.header, outputString]);
+            fprintf(fid, '%s\n', p.Results.header);
+            checkLFADSFoundString = LFADS.Run.generateCheckRunLFADSPyFoundString(p.Results.path_run_lfads_py);
+            fprintf(fid, '\n%s\n', checkLFADSFoundString);
+            
+            fprintf(fid, '%s\n', outputString);
             fclose(fid);
             LFADS.Utils.chmod('ug+rx', f);
         end
@@ -1280,6 +1307,7 @@ classdef Run < handle & matlab.mixin.CustomDisplay
             %   validation error checkpoint
 
             p = inputParser();
+            p.addParameter('path_run_lfads_py', '$(which run_lfads.py)', @ischar);
             p.addParameter('header', '#!/bin/bash\n', @ischar);
             p.KeepUnmatched = true;
             p.parse(varargin{:});
@@ -1287,9 +1315,15 @@ classdef Run < handle & matlab.mixin.CustomDisplay
             f = r.fileShellScriptLFADSWriteModelParams;
             fid = fopen(f, 'w');
 
-            outputString = r.buildCommandLFADSWriteModelParams(p.Unmatched);
+            outputString = r.buildCommandLFADSWriteModelParams(...
+                'path_run_lfads_py', p.Results.path_run_lfads_py, ...
+                p.Unmatched);
 
-            fprintf(fid, [p.Results.header outputString]);
+            fprintf(fid, '%s\n', p.Results.header);
+            checkLFADSFoundString = LFADS.Run.generateCheckRunLFADSPyFoundString(p.Results.path_run_lfads_py);
+            fprintf(fid, '\n%s\n', checkLFADSFoundString);
+            
+            fprintf(fid, '%s\n', outputString);
             fclose(fid);
             LFADS.Utils.chmod('ug+rx', f);
         end
@@ -1450,6 +1484,7 @@ classdef Run < handle & matlab.mixin.CustomDisplay
                     seqs{iDS}(ntr).rates = squeeze(pm.rates(:,:,ntr));
                     seqs{iDS}(ntr).factors = squeeze(pm.factors(:,:,ntr));
                     seqs{iDS}(ntr).generator_states = squeeze(pm.generator_states(:,:,ntr));
+                    seqs{iDS}(ntr).generator_ics = squeeze(pm.generator_ics(:,ntr));
                     if ~isempty(pm.controller_outputs)
                         seqs{iDS}(ntr).controller_outputs = ...
                             squeeze(pm.controller_outputs(:,:,ntr));
@@ -1485,6 +1520,26 @@ classdef Run < handle & matlab.mixin.CustomDisplay
             readouts = readouts';
 
         end
+        
+        function fitLog = loadFitLog(r, varargin)
+            fname = r.fileFitLog;
+            assert(exist(fname, 'file') > 1, 'fitlog.csv file not found in lfadsOutput directory. Ensure that model has been trained');
 
+            r.fitLog = LFADS.FitLog(fname, r.name);
+            fitLog = r.fitLog;
+        end
+    end
+    
+    methods(Static)
+        function str = generateCheckRunLFADSPyFoundString(run_lfads_path)
+            if nargin < 1
+                run_lfads_path = '$(which run_lfads.py)';
+            end
+            str = ['path_to_run_lfads=' run_lfads_path newline ...
+                   'if [ ! -n "$path_to_run_lfads" ]; then' newline ...
+                   '    echo "Error: run_lfads.py not found on PATH. Ensure you add LFADS to your system PATH."' newline ...
+                   '    exit 1' newline ...
+                   'fi' newline];
+        end
     end
 end
