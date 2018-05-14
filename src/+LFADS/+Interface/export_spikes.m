@@ -1,4 +1,4 @@
-function export_spikes(outfile, ytrain, ytest, varargin, output_dist)
+function export_spikes(outfile, ytrain, ytest, output_dist, varargin)
 %% function lfads_export_spikes(outfile, ytrain, ytest, varargin)
 %
 % exports spikes to an hdf5 file that can be easily read by python

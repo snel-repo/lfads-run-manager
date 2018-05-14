@@ -328,7 +328,7 @@ for ndset = 1:numel(seqs)
 
     %% export the spikes
     % Added output_dist argument - JZ
-    LFADS.Interface.export_spikes(outfile, ytrain, ytest, varout{:}, output_dist)
+    LFADS.Interface.export_spikes(outfile, ytrain, ytest, output_dist, varout{:})
 end
 prog.finish();
 
