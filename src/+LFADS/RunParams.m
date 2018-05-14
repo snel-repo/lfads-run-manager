@@ -172,8 +172,8 @@ classdef RunParams < matlab.mixin.CustomDisplay
     % Retired properties that should be kept around for hash value purposes
     % but no longer output to LFADS
     properties(Hidden)
-        c_in_factors_dim uint16 = 50;
         setInFactorsMatchDataForSingleDataset logical = false; % if true, c_in_factors_dim will be set to the dimensionality of the data when only a single dataset is used
+        c_in_factors_dim uint16 = 50; % size of the input factors for multi-session data
     end
 
     properties(Dependent)
