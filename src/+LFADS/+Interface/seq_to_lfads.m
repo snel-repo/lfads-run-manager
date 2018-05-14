@@ -253,7 +253,7 @@ for ndset = 1:numel(seqs)
             end  
         end
     elseif strcmp( output_dist, 'gaussian' )
-        for it = 1:nTrainTrials
+        for it = 1:nTestTrials
             nn = testInds(it);
             spks = seq(nn).y(whichChannelsThisSet,1:inputTimeBinsToKeep);
             if binSizeMS ~= inputBinSizeMS
