@@ -194,7 +194,7 @@ for ndset = 1:numel(seqs)
             nn = trainInds(it);
             spks = seq(nn).y(whichChannelsThisSet,1:inputTimeBinsToKeep);
             if binSizeMS ~= inputBinSizeMS
-                tmp2 = resample( spks', inputBinSizeMs, binSizeMs );
+                tmp2 = resample( spks', inputBinSizeMS, binSizeMs );
             else
                 tmp2 = spks';
             end
@@ -202,17 +202,17 @@ for ndset = 1:numel(seqs)
             % store down the (optional) true latents and FRs
             if isfield(seq,'x_true')
                 xkeep = seq(nn).x_true(:, 1:inputTimeBinsToKeep);
-                tmp2 = resample( xkeep', inputBinSizeMs, binSizeMs );
+                tmp2 = resample( xkeep', inputBinSizeMS, binSizeMs );
                 xtrain_true(it,:,:) = tmp2;
             end
             if isfield(seq,'y_true')
                 ykeep = seq(nn).y_true(whichChannelsThisSet, 1:inputTimeBinsToKeep);
-                tmp2 = resample( ykeep', inputBinSizeMs, binSizeMs );
+                tmp2 = resample( ykeep', inputBinSizeMS, binSizeMs );
                 ytrain_true(it,:,:) = tmp2;
             end
             if isfield(seq,'externalInputs')
                 ykeep = seq(nn).externalInputs(:, 1:inputTimeBinsToKeep);
-                tmp2 = resample( ykeep', inputBinSizeMs, binSizeMs );
+                tmp2 = resample( ykeep', inputBinSizeMS, binSizeMs );
                 train_extinput(it,:,:) = tmp2;
             end
         end
@@ -257,7 +257,7 @@ for ndset = 1:numel(seqs)
             nn = testInds(it);
             spks = seq(nn).y(whichChannelsThisSet,1:inputTimeBinsToKeep);
             if binSizeMS ~= inputBinSizeMS
-                tmp2 = resample( spks', inputBinSizeMs, binSizeMs );
+                tmp2 = resample( spks', inputBinSizeMS, binSizeMs );
             else
                 tmp2 = spks';
             end
@@ -265,17 +265,17 @@ for ndset = 1:numel(seqs)
             % store down the (optional) true latents and FRs
             if isfield(seq,'x_true')
                 xkeep = seq(nn).x_true(:, 1:inputTimeBinsToKeep);
-                tmp2 = resample( xkeep', inputBinSizeMs, binSizeMs );
+                tmp2 = resample( xkeep', inputBinSizeMS, binSizeMs );
                 xtrain_true(it,:,:) = tmp2;
             end
             if isfield(seq,'y_true')
                 ykeep = seq(nn).y_true(whichChannelsThisSet, 1:inputTimeBinsToKeep);
-                tmp2 = resample( ykeep', inputBinSizeMs, binSizeMs );
+                tmp2 = resample( ykeep', inputBinSizeMS, binSizeMs );
                 ytrain_true(it,:,:) = tmp2;
             end
             if isfield(seq,'externalInputs')
                 ykeep = seq(nn).externalInputs(:, 1:inputTimeBinsToKeep);
-                tmp2 = resample( ykeep', inputBinSizeMs, binSizeMs );
+                tmp2 = resample( ykeep', inputBinSizeMS, binSizeMs );
                 train_extinput(it,:,:) = tmp2;
             end
         end
