@@ -26,7 +26,9 @@ p.addParameter('inputBinSizeMs', 1, @isscalar);
 p.addParameter('conversion_factor', 1, @isscalar);
 p.addParameter('alignment_matrix_cxf', {}, @iscell);
 p.addParameter('alignment_bias_c', {}, @iscell);
+p.addParameter('c_output_dist','poisson',@ischar);
 p.parse(varargin{:});
+output_dist = p.Results.c_output_dist;
 trainInds = p.Results.trainInds;
 testInds = p.Results.testInds;
 binSizeMS = p.Results.binSizeMs;
@@ -154,70 +156,133 @@ for ndset = 1:numel(seqs)
         train_extinput = zeros(nTrainTrials, nTimeBins, nExtInputs);
         test_extinput = zeros(nTestTrials, nTimeBins, nExtInputs);
     end
-    
-    % compile the train data
-    for it = 1:nTrainTrials
-        nn = trainInds(it);
-        spks = seq(nn).y(whichChannelsThisSet,1:inputTimeBinsToKeep);
-        if binSizeMS ~= inputBinSizeMS
-            tmp = reshape(full(spks'),[],nTimeBins,size(spks,1));
-            tmp2=squeeze(sum(tmp, 1)); % should be nTimeBins x nChannels
-        else
-            tmp2 = full(spks)';
-        end
-        ytrain(it,:,:) = int64(tmp2);
-        % store down the (optional) true latents and FRs
-        if isfield(seq,'x_true')
-            xkeep = seq(nn).x_true(:, 1:inputTimeBinsToKeep);
-            tmp = reshape(xkeep',[],nTimeBins,size(xkeep,1));
-            tmp2=squeeze(sum(tmp, 1))/binSizeMS;
-            xtrain_true(it,:,:) = tmp2;
-        end
-        if isfield(seq,'y_true')
-            ykeep = seq(nn).y_true(whichChannelsThisSet, 1:inputTimeBinsToKeep);
-            tmp = reshape(ykeep',[],nTimeBins,size(ykeep,1));
-            tmp2=squeeze(sum(tmp, 1))/binSizeMS;
-            ytrain_true(it,:,:) = tmp2;
-        end
-        if isfield(seq,'externalInputs')
-            ykeep = seq(nn).externalInputs(:, 1:inputTimeBinsToKeep);
-            tmp = reshape(ykeep',[],nTimeBins,size(ykeep,1));
-            tmp2=squeeze(sum(tmp, 1))/binSizeMS;
-            train_extinput(it,:,:) = tmp2;
-        end
-    end
 
-    % compile the test data
-    for it = 1:nTestTrials
-        nn = testInds(it);
-        spks = seq(nn).y(whichChannelsThisSet, 1:inputTimeBinsToKeep);
-        if binSizeMS ~= inputBinSizeMS
-            tmp = reshape(full(spks'),[],nTimeBins,size(spks,1));
-            tmp2=squeeze(sum(tmp, 1));
-        else
-            tmp2 = full(spks)';
+    if strcmp(output_dist,'poisson')
+        % compile the train data
+        for it = 1:nTrainTrials
+            nn = trainInds(it);
+            spks = seq(nn).y(whichChannelsThisSet,1:inputTimeBinsToKeep);
+            if binSizeMS ~= inputBinSizeMS
+                tmp = reshape(full(spks'),[],nTimeBins,size(spks,1));
+                tmp2=squeeze(sum(tmp, 1)); % should be nTimeBins x nChannels
+            else
+                tmp2 = full(spks)';
+            end
+            ytrain(it,:,:) = int64(tmp2);
+            % store down the (optional) true latents and FRs
+            if isfield(seq,'x_true')
+                xkeep = seq(nn).x_true(:, 1:inputTimeBinsToKeep);
+                tmp = reshape(xkeep',[],nTimeBins,size(xkeep,1));
+                tmp2=squeeze(sum(tmp, 1))/binSizeMS;
+                xtrain_true(it,:,:) = tmp2;
+            end
+            if isfield(seq,'y_true')
+                ykeep = seq(nn).y_true(whichChannelsThisSet, 1:inputTimeBinsToKeep);
+                tmp = reshape(ykeep',[],nTimeBins,size(ykeep,1));
+                tmp2=squeeze(sum(tmp, 1))/binSizeMS;
+                ytrain_true(it,:,:) = tmp2;
+            end
+            if isfield(seq,'externalInputs')
+                ykeep = seq(nn).externalInputs(:, 1:inputTimeBinsToKeep);
+                tmp = reshape(ykeep',[],nTimeBins,size(ykeep,1));
+                tmp2=squeeze(sum(tmp, 1))/binSizeMS;
+                train_extinput(it,:,:) = tmp2;
+            end
         end
-        ytest(it,:,:) = int64(tmp2);
-        % store down the (optional) true latents and FRs
-        if isfield(seq,'x_true')
-            xkeep = seq(nn).x_true(:,1:inputTimeBinsToKeep);
-            tmp = reshape(xkeep',[],nTimeBins,size(xkeep,1));
-            tmp2=squeeze(sum(tmp, 1))/binSizeMS;
-            xtest_true(it,:,:) = tmp2;
+    elseif strcmp( output_dist, 'gaussian' )
+        for it = 1:nTrainTrials
+            nn = trainInds(it);
+            spks = seq(nn).y(whichChannelsThisSet,1:inputTimeBinsToKeep);
+            if binSizeMS ~= inputBinSizeMS
+                tmp2 = resample( spks', inputBinSizeMs, binSizeMs );
+            else
+                tmp2 = spks';
+            end
+            ytrain(it,:,:) = double(tmp2);
+            % store down the (optional) true latents and FRs
+            if isfield(seq,'x_true')
+                xkeep = seq(nn).x_true(:, 1:inputTimeBinsToKeep);
+                tmp2 = resample( xkeep', inputBinSizeMs, binSizeMs );
+                xtrain_true(it,:,:) = tmp2;
+            end
+            if isfield(seq,'y_true')
+                ykeep = seq(nn).y_true(whichChannelsThisSet, 1:inputTimeBinsToKeep);
+                tmp2 = resample( ykeep', inputBinSizeMs, binSizeMs );
+                ytrain_true(it,:,:) = tmp2;
+            end
+            if isfield(seq,'externalInputs')
+                ykeep = seq(nn).externalInputs(:, 1:inputTimeBinsToKeep);
+                tmp2 = resample( ykeep', inputBinSizeMs, binSizeMs );
+                train_extinput(it,:,:) = tmp2;
+            end
         end
-        if isfield(seq,'y_true')
-            ykeep = seq(nn).y_true(whichChannelsThisSet, 1:inputTimeBinsToKeep);
-            tmp = reshape(ykeep',[],nTimeBins,size(ykeep,1));
-            tmp2=squeeze(sum(tmp, 1))/binSizeMS;
-            ytest_true(it,:,:) = tmp2;
-        end  
-        if isfield(seq,'externalInputs')
-            ykeep = seq(nn).externalInputs(:, 1:inputTimeBinsToKeep);
-            tmp = reshape(ykeep',[],nTimeBins,size(ykeep,1));
-            tmp2=squeeze(sum(tmp, 1))/binSizeMS;
-            test_extinput(it,:,:) = tmp2;
-        end  
+    else
+        disp( 'Ya fucked up')
     end
+    
+    if strcmp(output_dist,'poisson')
+        % compile the test data
+        for it = 1:nTestTrials
+            nn = testInds(it);
+            spks = seq(nn).y(whichChannelsThisSet, 1:inputTimeBinsToKeep);
+            if binSizeMS ~= inputBinSizeMS
+                tmp = reshape(full(spks'),[],nTimeBins,size(spks,1));
+                tmp2=squeeze(sum(tmp, 1));
+            else
+                tmp2 = full(spks)';
+            end
+            ytest(it,:,:) = int64(tmp2);
+            % store down the (optional) true latents and FRs
+            if isfield(seq,'x_true')
+                xkeep = seq(nn).x_true(:,1:inputTimeBinsToKeep);
+                tmp = reshape(xkeep',[],nTimeBins,size(xkeep,1));
+                tmp2=squeeze(sum(tmp, 1))/binSizeMS;
+                xtest_true(it,:,:) = tmp2;
+            end
+            if isfield(seq,'y_true')
+                ykeep = seq(nn).y_true(whichChannelsThisSet, 1:inputTimeBinsToKeep);
+                tmp = reshape(ykeep',[],nTimeBins,size(ykeep,1));
+                tmp2=squeeze(sum(tmp, 1))/binSizeMS;
+                ytest_true(it,:,:) = tmp2;
+            end  
+            if isfield(seq,'externalInputs')
+                ykeep = seq(nn).externalInputs(:, 1:inputTimeBinsToKeep);
+                tmp = reshape(ykeep',[],nTimeBins,size(ykeep,1));
+                tmp2=squeeze(sum(tmp, 1))/binSizeMS;
+                test_extinput(it,:,:) = tmp2;
+            end  
+        end
+    elseif strcmp( output_dist, 'gaussian' )
+        for it = 1:nTrainTrials
+            nn = testInds(it);
+            spks = seq(nn).y(whichChannelsThisSet,1:inputTimeBinsToKeep);
+            if binSizeMS ~= inputBinSizeMS
+                tmp2 = resample( spks', inputBinSizeMs, binSizeMs );
+            else
+                tmp2 = spks';
+            end
+            ytrain(it,:,:) = double(tmp2);
+            % store down the (optional) true latents and FRs
+            if isfield(seq,'x_true')
+                xkeep = seq(nn).x_true(:, 1:inputTimeBinsToKeep);
+                tmp2 = resample( xkeep', inputBinSizeMs, binSizeMs );
+                xtrain_true(it,:,:) = tmp2;
+            end
+            if isfield(seq,'y_true')
+                ykeep = seq(nn).y_true(whichChannelsThisSet, 1:inputTimeBinsToKeep);
+                tmp2 = resample( ykeep', inputBinSizeMs, binSizeMs );
+                ytrain_true(it,:,:) = tmp2;
+            end
+            if isfield(seq,'externalInputs')
+                ykeep = seq(nn).externalInputs(:, 1:inputTimeBinsToKeep);
+                tmp2 = resample( ykeep', inputBinSizeMs, binSizeMs );
+                train_extinput(it,:,:) = tmp2;
+            end
+        end
+    else
+        disp( 'Oh boy...')
+    end
+    
 
     varout = {};
     assert(~any(isnan(ytrain(:))) && ~any(isnan(ytest(:))), 'NaNs found in counts data');
@@ -262,7 +327,8 @@ for ndset = 1:numel(seqs)
     
 
     %% export the spikes
-    LFADS.Interface.export_spikes(outfile, ytrain, ytest, varout{:})
+    % Added output_dist argument - JZ
+    LFADS.Interface.export_spikes(outfile, ytrain, ytest, varout{:}, output_dist)
 end
 prog.finish();
 
