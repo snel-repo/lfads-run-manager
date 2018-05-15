@@ -168,9 +168,9 @@ for ndset = 1:numel(seqs)
             else
                 tmp2 = full(spks)';                
             end
-            ytest(it,:,:) = int64(tmp2);            
+            ytrain(it,:,:) = int64(tmp2);            
         else % If 'gaussian'
-            ytest(it,:,:) = spks';
+            ytrain(it,:,:) = spks';
         end
         % store down the (optional) true latents and FRs
         if isfield(seq,'x_true')
