@@ -1,4 +1,4 @@
-function export_spikes(outfile, ytrain, ytest, varargin)
+function export_spikes(outfile, ytrain, ytest, output_dist, varargin)
 %% function lfads_export_spikes(outfile, ytrain, ytest, varargin)
 %
 % exports spikes to an hdf5 file that can be easily read by python
@@ -34,10 +34,17 @@ function export_spikes(outfile, ytrain, ytest, varargin)
     outfile = LFADS.Utils.GetFullPath(outfile);
 
     %% create an hdf5 file and add the variables
-    h5create(outfile, '/train_data', size(ytrain), 'Datatype','int64');
-    h5write(outfile, '/train_data', ytrain);
-    h5create(outfile, '/valid_data', size(ytest),'Datatype','int64');
-    h5write(outfile, '/valid_data', ytest);
+    if strcmp(output_dist,'poisson')
+        h5create(outfile, '/train_data', size(ytrain), 'Datatype','int64');
+        h5write(outfile, '/train_data', ytrain);
+        h5create(outfile, '/valid_data', size(ytest),'Datatype','int64');
+        h5write(outfile, '/valid_data', ytest);
+    else
+        h5create(outfile, '/train_data', size(ytrain), 'Datatype','double');
+        h5write(outfile, '/train_data', ytrain);
+        h5create(outfile, '/valid_data', size(ytest),'Datatype','double');
+        h5write(outfile, '/valid_data', ytest);
+    end
 
     if exist('varargin','var') && ~isempty(varargin)
         %% assign the rest of the variables

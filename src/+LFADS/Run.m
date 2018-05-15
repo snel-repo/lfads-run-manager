@@ -887,7 +887,8 @@ classdef Run < handle & matlab.mixin.CustomDisplay
                 % arguments for the 'seq_to_lfads' call below
                 seqToLFADSArgs = {'binSizeMs', par.spikeBinMs,  ...
                     'inputBinSizeMs', inputBinSizeMs, ...
-                    'trainInds', trainIndsCell(maskGenerate), 'testInds', validIndsCell(maskGenerate)};
+                                  'trainInds', trainIndsCell(maskGenerate), 'testInds', validIndsCell(maskGenerate),...
+                                 'c_output_dist', par.c_output_dist };
 
                 if useAlignMatrices
                     seqToLFADSArgs{end+1} = 'alignment_matrix_cxf';
