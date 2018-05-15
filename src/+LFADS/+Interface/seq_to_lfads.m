@@ -161,13 +161,17 @@ for ndset = 1:numel(seqs)
     for it = 1:nTrainTrials
         nn = trainInds(it);
         spks = seq(nn).y(whichChannelsThisSet,1:inputTimeBinsToKeep);
-        if binSizeMS ~= inputBinSizeMS && strcmp(output_dist,'poisson')
-            tmp = reshape(full(spks'),[],nTimeBins,size(spks,1));
-            tmp2=squeeze(sum(tmp, 1)); % should be nTimeBins x nChannels
-        else
-            tmp2 = full(spks)';
+                if strcmp(output_dist,'poisson')
+            if binSizeMS ~= inputBinSizeMS
+                tmp = reshape(full(spks'),[],nTimeBins,size(spks,1));
+                tmp2=squeeze(sum(tmp, 1));
+            else
+                tmp2 = full(spks)';                
+            end
+            ytest(it,:,:) = int64(tmp2);            
+        else % If 'gaussian'
+            ytest(it,:,:) = spks';
         end
-        ytrain(it,:,:) = int64(tmp2);
         % store down the (optional) true latents and FRs
         if isfield(seq,'x_true')
             xkeep = seq(nn).x_true(:, 1:inputTimeBinsToKeep);
@@ -235,13 +239,18 @@ for ndset = 1:numel(seqs)
     for it = 1:nTestTrials
         nn = testInds(it);
         spks = seq(nn).y(whichChannelsThisSet, 1:inputTimeBinsToKeep);
-        if binSizeMS ~= inputBinSizeMS && strcmp(output_dist,'poisson')
-            tmp = reshape(full(spks'),[],nTimeBins,size(spks,1));
-            tmp2=squeeze(sum(tmp, 1));
-        else
-            tmp2 = full(spks)';
+        if strcmp(output_dist,'poisson')
+            if binSizeMS ~= inputBinSizeMS
+                tmp = reshape(full(spks'),[],nTimeBins,size(spks,1));
+                tmp2=squeeze(sum(tmp, 1));
+            else
+                tmp2 = full(spks)';                
+            end
+            ytest(it,:,:) = int64(tmp2);            
+        else % If 'gaussian'
+            ytest(it,:,:) = spks';
         end
-        ytest(it,:,:) = int64(tmp2);
+
         % store down the (optional) true latents and FRs
         if isfield(seq,'x_true')
             xkeep = seq(nn).x_true(:,1:inputTimeBinsToKeep);
