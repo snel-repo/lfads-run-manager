@@ -205,37 +205,7 @@ for ndset = 1:numel(seqs)
         end
     end
 
-%     elseif strcmp(output_dist,'gaussian')
-%         for it = 1:nTrainTrials
-%             nn = trainInds(it);
-%             spks = seq(nn).y(whichChannelsThisSet,1:inputTimeBinsToKeep);
-%             if binSizeMS ~= inputBinSizeMS
-%                 tmp2 = resample( spks', inputBinSizeMS, binSizeMS );
-%             else
-%                 tmp2 = spks';
-%             end
-%             ytrain(it,:,:) = double(tmp2);
-%             % store down the (optional) true latents and FRs
-%             if isfield(seq,'x_true')
-%                 xkeep = seq(nn).x_true(:, 1:inputTimeBinsToKeep);
-%                 tmp2 = resample( xkeep', inputBinSizeMS, binSizeMS );
-%                 xtrain_true(it,:,:) = tmp2;
-%             end
-%             if isfield(seq,'y_true')
-%                 ykeep = seq(nn).y_true(whichChannelsThisSet, 1:inputTimeBinsToKeep);
-%                 tmp2 = resample( ykeep', inputBinSizeMS, binSizeMS );
-%                 ytrain_true(it,:,:) = tmp2;
-%             end
-%             if isfield(seq,'externalInputs')
-%                 ykeep = seq(nn).externalInputs(:, 1:inputTimeBinsToKeep);
-%                 tmp2 = resample( ykeep', inputBinSizeMS, binSizeMS );
-%                 train_extinput(it,:,:) = tmp2;
-%             end
-%         end
-%     end
-    
-%     if strcmp(output_dist,'poisson')
-        % compile the test data
+    % compile the test data
     for it = 1:nTestTrials
         nn = testInds(it);
         spks = seq(nn).y(whichChannelsThisSet, 1:inputTimeBinsToKeep);
@@ -282,37 +252,7 @@ for ndset = 1:numel(seqs)
                 test_extinput(it,:,:) = ykeep;
             end
         end  
-    end
-%     elseif strcmp( output_dist, 'gaussian' )
-%         for it = 1:nTestTrials
-%             nn = testInds(it);
-%             spks = seq(nn).y(whichChannelsThisSet,1:inputTimeBinsToKeep);
-%             if binSizeMS ~= inputBinSizeMS
-%                 tmp2 = resample( spks', inputBinSizeMS, binSizeMS );
-%             else
-%                 tmp2 = spks';
-%             end
-%             ytrain(it,:,:) = double(tmp2);
-%             % store down the (optional) true latents and FRs
-%             if isfield(seq,'x_true')
-%                 xkeep = seq(nn).x_true(:, 1:inputTimeBinsToKeep);
-%                 tmp2 = resample( xkeep', inputBinSizeMS, binSizeMS );
-%                 xtrain_true(it,:,:) = tmp2;
-%             end
-%             if isfield(seq,'y_true')
-%                 ykeep = seq(nn).y_true(whichChannelsThisSet, 1:inputTimeBinsToKeep);
-%                 tmp2 = resample( ykeep', inputBinSizeMS, binSizeMS );
-%                 ytrain_true(it,:,:) = tmp2;
-%             end
-%             if isfield(seq,'externalInputs')
-%                 ykeep = seq(nn).externalInputs(:, 1:inputTimeBinsToKeep);
-%                 tmp2 = resample( ykeep', inputBinSizeMS, binSizeMS );
-%                 train_extinput(it,:,:) = tmp2;
-%             end
-%         end
-%     else
-%     end
-    
+    end    
 
     varout = {};
     assert(~any(isnan(ytrain(:))) && ~any(isnan(ytest(:))), 'NaNs found in counts data');
