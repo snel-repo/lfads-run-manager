@@ -355,7 +355,6 @@ for ndset = 1:numel(seqs)
     varout{end+1} = 'valid_inds';
     varout{end+1} = testInds;
     
-    keyboard
     %% export the spikes
     % Added output_dist argument - JZ
     LFADS.Interface.export_spikes(outfile, ytrain, ytest, output_dist, varout{:})
