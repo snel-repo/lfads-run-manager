@@ -133,9 +133,15 @@ for ndset = 1:numel(seqs)
     nNeurons = numel(whichChannelsThisSet);
 
     % how many output time bins should there be
-    nTimeBins = floor( double( nTimeMS ) / double( binSizeMS ) );
-    % how many input timebins should we keep
-    inputTimeBinsToKeep = nTimeBins * double( binSizeMS ) / double( inputBinSizeMS );
+    % if gaussian and continuous, we have already resampled the data earlier
+    if strcmp( output_dist, 'poisson' ) && inputBinSizeMS ~= binSizeMS
+        nTimeBins = floor( double( nTimeMS ) / double( binSizeMS ) );
+        % how many input timebins should we keep
+        inputTimeBinsToKeep = nTimeBins * double( binSizeMS ) / double( inputBinSizeMS );
+    else
+        nTimeBins = nTimeMS;
+        inputTimeBinsToKeep = nTimeBins;
+    end
 
     nTrainTrials = numel(trainInds);
     nTestTrials = numel(testInds);
