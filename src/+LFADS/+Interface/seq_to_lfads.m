@@ -135,10 +135,12 @@ for ndset = 1:numel(seqs)
     % how many output time bins should there be
     % if gaussian and continuous, we have already resampled the data earlier
     if strcmp( output_dist, 'poisson' ) && inputBinSizeMS ~= binSizeMS
+        disp('yay')
         nTimeBins = floor( double( nTimeMS ) / double( binSizeMS ) );
         % how many input timebins should we keep
         inputTimeBinsToKeep = nTimeBins * double( binSizeMS ) / double( inputBinSizeMS );
     else
+        disp( 'fuck')
         nTimeBins = nTimeMS;
         inputTimeBinsToKeep = nTimeBins;
     end
@@ -167,12 +169,12 @@ for ndset = 1:numel(seqs)
     for it = 1:nTrainTrials
         nn = trainInds(it);
         spks = seq(nn).y(whichChannelsThisSet,1:inputTimeBinsToKeep);
-                if strcmp(output_dist,'poisson')
+        if strcmp( output_dist,'poisson' )
             if binSizeMS ~= inputBinSizeMS
                 tmp = reshape(full(spks'),[],nTimeBins,size(spks,1));
                 tmp2=squeeze(sum(tmp, 1));
             else
-                tmp2 = full(spks)';                
+                tmp2 = full(spks');                
             end
             ytrain(it,:,:) = int64(tmp2);            
         else % If 'gaussian'

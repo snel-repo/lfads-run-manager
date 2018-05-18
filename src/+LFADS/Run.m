@@ -1466,7 +1466,12 @@ classdef Run < handle & matlab.mixin.CustomDisplay
                 dt_pm = r.params.spikeBinMs;
                 dt_y = info(iDS).seq_binSizeMs;
                 rebin = dt_pm / dt_y;
-                time = info(iDS).seq_timeVector(1:rebin:end);
+                if strcmp( r.params.run_type, 'emg' ) && dt_y ~= dt_pm
+                    time = info(iDS).seq_timeVector(1:end);
+                else
+                    time = info(iDS).seq_timeVector(1:rebin:end);
+                end
+                
                 time = time(1:size(pmData.rates, 2));
 
                 pms(iDS) = LFADS.PosteriorMeans(pmData, r.params, time, conditionIds, rawCounts, posterior_mean_kind); %#ok<AGROW>
