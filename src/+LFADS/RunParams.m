@@ -158,6 +158,9 @@ classdef RunParams < matlab.mixin.CustomDisplay
         % Output distribution for rates
         c_output_dist char = 'poisson'; % or gaussian, type of output distribution
 
+        % Output nonlinearity (afffects Gaussian output_dist)
+        c_do_exp_nonlin logical = false;
+
         % Stitching and alignment matrices
         c_do_train_readin logical = true; % for stitching models, make the readin matrices trainable (true) or fix them to equal the alignment matrices (false)
         useAlignmentMatrix logical = false; % Whether to use an alignment matrix when stitching datasets together.

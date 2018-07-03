@@ -134,16 +134,16 @@ for ndset = 1:numel(seqs)
 
     % how many output time bins should there be
     % if gaussian and continuous, we have already resampled the data earlier
-    if strcmp( output_dist, 'poisson' ) && inputBinSizeMS ~= binSizeMS
-        disp('yay')
-        nTimeBins = floor( double( nTimeMS ) / double( binSizeMS ) );
-        % how many input timebins should we keep
-        inputTimeBinsToKeep = nTimeBins * double( binSizeMS ) / double( inputBinSizeMS );
-    else
-        disp( 'fuck')
-        nTimeBins = nTimeMS;
-        inputTimeBinsToKeep = nTimeBins;
-    end
+    %    if strcmp( output_dist, 'poisson' ) && inputBinSizeMS ~= binSizeMS
+    %        nTimeBins = floor( double( nTimeMS ) / double( binSizeMS ) );
+    %        % how many input timebins should we keep
+    %        inputTimeBinsToKeep = nTimeBins * double( binSizeMS ) / double( inputBinSizeMS );
+    %    else
+    %    end
+
+    % since we do the rebinning/resampling in continuous form, we removed the rebinning step in seq to lfads
+    nTimeBins = nTimeMS / inputBinSizeMS ;
+    inputTimeBinsToKeep = nTimeBins;
 
     nTrainTrials = numel(trainInds);
     nTestTrials = numel(testInds);
@@ -170,12 +170,13 @@ for ndset = 1:numel(seqs)
         nn = trainInds(it);
         spks = seq(nn).y(whichChannelsThisSet,1:inputTimeBinsToKeep);
         if strcmp( output_dist,'poisson' )
-            if binSizeMS ~= inputBinSizeMS
-                tmp = reshape(full(spks'),[],nTimeBins,size(spks,1));
-                tmp2=squeeze(sum(tmp, 1));
-            else
-                tmp2 = full(spks');                
-            end
+            %            if binSizeMS ~= inputBinSizeMS
+            %                tmp = reshape(full(spks'),[],nTimeBins,size(spks,1));
+            %                tmp2=squeeze(sum(tmp, 1));
+            %            else
+
+            %            end
+            tmp2 = spks';
             ytrain(it,:,:) = int64(tmp2);            
         else % If 'gaussian'
             ytrain(it,:,:) = spks';
@@ -191,6 +192,7 @@ for ndset = 1:numel(seqs)
                 xtrain_true(it,:,:) = xkeep;
             end
         end
+        
         if isfield(seq,'y_true')
             ykeep = seq(nn).y_true(whichChannelsThisSet, 1:inputTimeBinsToKeep);
             if binSizeMS ~= inputBinSizeMS && strcmp(output_dist,'poisson')
@@ -218,17 +220,18 @@ for ndset = 1:numel(seqs)
         nn = testInds(it);
         spks = seq(nn).y(whichChannelsThisSet, 1:inputTimeBinsToKeep);
         if strcmp(output_dist,'poisson')
-            if binSizeMS ~= inputBinSizeMS
-                tmp = reshape(full(spks'),[],nTimeBins,size(spks,1));
-                tmp2=squeeze(sum(tmp, 1));
-            else
-                tmp2 = full(spks)';                
-            end
+            %    if binSizeMS ~= inputBinSizeMS
+            %        tmp = reshape(full(spks'),[],nTimeBins,size(spks,1));
+            %        tmp2=squeeze(sum(tmp, 1));
+            %    else
+            tmp2 = spks';                
+            %    end
             ytest(it,:,:) = int64(tmp2);            
         else % If 'gaussian'
             ytest(it,:,:) = spks';
         end
 
+        %% THIS SECTION HAS NOT BEEN UPDATED THERERFORE WILL CAUSE ERRORS IF ADDED
         % store down the (optional) true latents and FRs
         if isfield(seq,'x_true')
             xkeep = seq(nn).x_true(:,1:inputTimeBinsToKeep);

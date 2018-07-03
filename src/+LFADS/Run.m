@@ -240,10 +240,7 @@ classdef Run < handle & matlab.mixin.CustomDisplay
 
             binWidthMs = timeVecMs(2) - timeVecMs(1);
 
-            for iTrial = nTrials:-1:1
-                seq(iTrial).y = squeeze(counts(iTrial, :, :)); % nChannels x nTime
-                seq(iTrial).y_time = timeVecMs;
-                seq(iTrial).binWidthMs = binWidthMs;
+            seq(iTrial).binWidthMs = binWidthMs;
                 if ~isempty(conditionId)
                     if iscell(conditionId)
                         seq(iTrial).conditionId = conditionId{iTrial};
@@ -258,8 +255,6 @@ classdef Run < handle & matlab.mixin.CustomDisplay
                      seq(iTrial).externalInputs = squeeze(externalInputs(iTrial, :, :));  % nExternalInputs x nTime
                 end
             end
-        end
-
         function [alignmentMatrices, alignmentBiases] = doMultisessionAlignment(r, regenerate)
             if nargin < 2
                 regenerate = false;
@@ -624,6 +619,7 @@ classdef Run < handle & matlab.mixin.CustomDisplay
 
             % call user function on dataset
             seq = r.convertDatasetToSequenceStruct(ds, mode);
+
 
             % check the sequence struct returned
             seq = r.checkSequenceStruct(seq);
