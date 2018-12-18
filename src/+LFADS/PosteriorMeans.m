@@ -69,9 +69,12 @@ classdef PosteriorMeans
                 end
 
                 % 12/18/18 CHANGE BY LW: Only scale rates if output is Poisson
+                % if not add pms.rates to pm.rates
                 if strcmp( params.c_output_dist, 'poisson' )
                     % convert rates into spikes / sec
                     pm.rates = pms.rates * 1000 / params.spikeBinMs;
+                else
+                    pm.rates = pms.rates;
                 end
                     
                 % store the times
