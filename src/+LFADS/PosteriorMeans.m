@@ -67,9 +67,13 @@ classdef PosteriorMeans
                     end
 
                 end
-                
-                % convert rates into spikes / sec
-                pm.rates = pms.rates * 1000 / params.spikeBinMs;
+
+                % 12/18/18 CHANGE BY LW: Only scale rates if output is Poisson
+                if strcmp( params.c_output_dist, 'poisson' )
+                    % convert rates into spikes / sec
+                    pm.rates = pms.rates * 1000 / params.spikeBinMs;
+                end
+                    
                 % store the times
                 pm.time = time;
                 
