@@ -248,7 +248,7 @@ classdef RunCollection < handle & matlab.mixin.CustomDisplay & matlab.mixin.Copy
             end
             prog.finish();
 
-            rc.writeSummaryText();
+            %rc.writeSummaryText();
         end
 
         function deleteLFADSOutput(rc, varargin)
