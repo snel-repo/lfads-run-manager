@@ -13,7 +13,8 @@ classdef PosteriorMeans
         post_g0_logvar % c_ic_enc_dim x nTrials initial conditions at encoder (before projecting out to generator units)
         
         generator_ics % nGeneratorUnits x nTrials` generator initial conditions
-        generator_states % nGeneratorUnits x T x nTrials 
+        generator_states % nGeneratorUnits x T x nTrials
+        mean_rates % For IG distribution
         rates % nNeurons x T x nTrials        
         costs % nTrials x 1
         nll_bound_vaes % nTrials x 1
@@ -71,12 +72,23 @@ classdef PosteriorMeans
                 % 12/18/18 CHANGE BY LW: Only scale rates if output is Poisson
                 % if not add pms.rates to pm.rates
                 if strcmp( params.c_output_dist, 'poisson' )
+                    disp( 'Yo' )
                     % convert rates into spikes / sec
                     pm.rates = pms.rates * 1000 / params.spikeBinMs;
+                    %pm.rates = pms.rates;
                 else
+                    disp( 'Yuh' )
                     pm.rates = pms.rates;
+                    if strcmp( params.c_output_dist, 'inverse-gamma' ) || strcmp( params.c_output_dist, 'gamma' ) || strcmp( params.c_output_dist, 'inverse-gaussian' )
+                        disp( 'Point point' )
+                        try 
+                            pm.mean_rates = pms.mean_rates;
+                        catch ME
+                            disp( 'WOWOWOWW SHIT IF FUCKED UPPPPP' )
+                        end
+                    end
                 end
-                    
+                disp( 'Yerr')    
                 % store the times
                 pm.time = time;
                 

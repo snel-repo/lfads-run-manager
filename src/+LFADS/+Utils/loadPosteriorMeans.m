@@ -6,9 +6,9 @@ function pms = loadPosteriorMeans(validFile, trainFile, validInds, ...
 total_trials = numel(validInds) + numel(trainInds);
 
 outputFields = {'controller_outputs','factors', 'rates', 'generator_states', 'generator_ics', ...
-    'costs','nll_bound_vaes', 'nll_bound_iwaes', 'post_g0_mean', 'post_g0_logvar'};
+    'costs','nll_bound_vaes', 'nll_bound_iwaes', 'post_g0_mean', 'post_g0_logvar', 'mean_rates'};
 storedVariables = {'controller_outputs','factors','output_dist_params', 'gen_states', ...
-    'gen_ics','costs','nll_bound_vaes','nll_bound_iwaes', 'post_g0_mean', 'post_g0_logvar'};
+    'gen_ics','costs','nll_bound_vaes','nll_bound_iwaes', 'post_g0_mean', 'post_g0_logvar', 'output_rates'};
 
 tfInfo = h5info(trainFile);
 tfNames = {tfInfo.Datasets.Name};
@@ -20,6 +20,7 @@ if numel(intersect(tfNames, vaNames)) ~= numel(tfNames)
 end
 
 [vars_to_get, name_index, ~] = intersect(storedVariables, tfNames);
+
 for nf = 1:numel(vars_to_get)
     variable = vars_to_get{nf};
     outputName = outputFields{name_index(nf)};

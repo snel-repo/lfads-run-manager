@@ -867,7 +867,7 @@ classdef Run < handle & matlab.mixin.CustomDisplay
                 [validIndsCell, trainIndsCell] = deal(cell(r.nDatasets, 1));
                 for iDS = 1:r.nDatasets
                     allInds = 1:numel(seqData{iDS});
-                    validIndsCell{iDS} = 1 : (r.params.trainToTestRatio+1) : numel(seqData{iDS});
+                    validIndsCell{iDS} = 1 : double(r.params.trainToTestRatio+1) : numel(seqData{iDS});
                     trainIndsCell{iDS} = setdiff(allInds, validIndsCell{iDS});
                 end
                 
@@ -1457,7 +1457,7 @@ classdef Run < handle & matlab.mixin.CustomDisplay
 
                 pmData = LFADS.Utils.loadPosteriorMeans(fullfile(r.pathLFADSOutput, validList{iDS}), ....
                     fullfile(r.pathLFADSOutput, trainList{iDS}), ...
-                    info(iDS).validInds, info(iDS).trainInds);
+                                                        info(iDS).validInds, info(iDS).trainInds);
 
                 dt_pm = r.params.spikeBinMs;
                 dt_y = info(iDS).seq_binSizeMs;
