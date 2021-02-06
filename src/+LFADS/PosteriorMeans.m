@@ -15,6 +15,7 @@ classdef PosteriorMeans
         generator_ics % nGeneratorUnits x nTrials` generator initial conditions
         generator_states % nGeneratorUnits x T x nTrials
         mean_rates % For IG distribution
+        controller_means % For IG distribution, controller mean states
         rates % nNeurons x T x nTrials        
         costs % nTrials x 1
         nll_bound_vaes % nTrials x 1
@@ -83,6 +84,8 @@ classdef PosteriorMeans
                         disp( 'Point point' )
                         try 
                             pm.mean_rates = pms.mean_rates;
+                            disp( 'Yesssirrr' )
+                            pm.controller_means = pms.controller_means;
                         catch ME
                             disp( 'WOWOWOWW SHIT IF FUCKED UPPPPP' )
                         end
